@@ -1,0 +1,1065 @@
+Here's a complete, responsive front-end landing page with a playable embedded game — all in a single self-contained HTML file (no backend, no external assets beyond fonts).
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbital Arcade — Play the Game, Explore the Galaxy</title>
+
+  <!-- Game-friendly fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ========== RESET & BASE ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --space-0: #050510;
+      --space-1: #0b0b24;
+      --space-2: #161638;
+      --accent: #7c5cff;
+      --accent-2: #00d4ff;
+      --accent-hot: #ff5ce1;
+      --star: #ffe9a8;
+      --text: #e9e9f7;
+      --muted: #9c9cc0;
+      --glass: rgba(255, 255, 255, 0.06);
+      --border: rgba(255, 255, 255, 0.12);
+      --radius: 18px;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--space-0);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated starfield background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 20% 30%, #fff 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 70% 15%, var(--star) 50%, transparent 50%),
+        radial-gradient(1px 1px at 40% 70%, #fff 50%, transparent 50%),
+        radial-gradient(1px 1px at 85% 55%, #b8c7ff 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 10% 85%, #fff 50%, transparent 50%),
+        radial-gradient(1px 1px at 55% 45%, #fff 50%, transparent 50%),
+        radial-gradient(1px 1px at 90% 90%, var(--star) 50%, transparent 50%);
+      background-size: 450px 450px, 350px 350px, 500px 500px, 400px 400px, 380px 380px, 520px 520px, 300px 300px;
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: 0;
+      animation: twinkle 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.35; }
+      100% { opacity: 0.8; }
+    }
+
+    /* Soft nebula glows */
+    .nebula {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .nebula-1 { width: 500px; height: 500px; top: -150px; left: -120px; background: var(--accent); }
+    .nebula-2 { width: 420px; height: 420px; top: 30%; right: -160px; background: var(--accent-hot); opacity: 0.22; }
+    .nebula-3 { width: 380px; height: 380px; bottom: -120px; left: 30%; background: var(--accent-2); opacity: 0.18; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ========== NAVIGATION ========== */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(5, 5, 16, 0.7);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 24px rgba(124, 92, 255, 0.5);
+    }
+
+    .logo-badge svg { width: 20px; height: 20px; fill: #fff; }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 8px 30px rgba(124, 92, 255, 0.4);
+    }
+
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(124, 92, 255, 0.55); }
+
+    .btn-ghost {
+      background: var(--glass);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
+
+    /* ========== HERO ========== */
+    .hero {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 100px 24px 80px;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent-2);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      max-width: 800px;
+      margin: 0 auto 20px;
+    }
+
+    .hero h1 .gradient {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-hot));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p {
+      max-width: 620px;
+      margin: 0 auto 36px;
+      color: var(--muted);
+      font-size: 1.15rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ========== FEATURES ========== */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-title h2 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .section-title p { color: var(--muted); max-width: 520px; margin: 0 auto; }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .feature-card:hover { transform: translateY(-6px); border-color: rgba(124, 92, 255, 0.5); }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 8px 24px rgba(124, 92, 255, 0.35);
+    }
+
+    .feature-icon svg { width: 22px; height: 22px; fill: #fff; }
+
+    .feature-card h3 { font-size: 1.15rem; margin-bottom: 8px; }
+
+    .feature-card p { color: var(--muted); font-size: 0.95rem; }
+
+    /* ========== GAME SECTION ========== */
+    .game-section {
+      padding: 80px 24px;
+      background: linear-gradient(180deg, transparent, rgba(124, 92, 255, 0.08), transparent);
+    }
+
+    .game-shell {
+      max-width: 860px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, var(--space-1), var(--space-2));
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 8px);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .game-title {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.8rem;
+      color: var(--star);
+      letter-spacing: 1px;
+    }
+
+    .game-hud {
+      display: flex;
+      gap: 18px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.7rem;
+    }
+
+    .hud-item { color: var(--muted); }
+    .hud-item span { color: var(--text); }
+
+    .game-canvas-wrap {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background:
+        radial-gradient(circle at 50% 40%, rgba(124, 92, 255, 0.15), transparent 60%),
+        #07071a;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      background: transparent;
+    }
+
+    .game-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      background: rgba(5, 5, 16, 0.82);
+      backdrop-filter: blur(6px);
+      padding: 20px;
+    }
+
+    .game-overlay.hidden { display: none; }
+
+    .game-overlay h3 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .game-overlay p { color: var(--muted); font-size: 0.9rem; max-width: 420px; }
+
+    .game-controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .game-controls .btn { font-family: 'Inter', sans-serif; }
+
+    .game-controls .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .mobile-controls {
+      display: none;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    .mobile-btn {
+      width: 72px;
+      height: 56px;
+      border-radius: 14px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 1.6rem;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .mobile-btn:active { background: rgba(255, 255, 255, 0.18); transform: scale(0.96); }
+
+    .game-tips {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .game-tips kbd {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+
+    /* ========== FOOTER ========== */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .footer a { color: var(--accent-2); text-decoration: none; }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      .nav-links { display: none; } /* simple: hide links on small screens */
+      .hero { padding: 64px 20px 56px; }
+      .section { padding: 48px 20px; }
+      .game-section { padding: 56px 16px; }
+      .game-shell { padding: 16px; }
+      .mobile-controls { display: flex; }
+      .game-header { justify-content: center; }
+    }
+
+    @media (max-width: 480px) {
+      .btn { padding: 10px 18px; font-size: 0.88rem; }
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .hero-actions .btn { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nebula background glows -->
+  <div class="nebula nebula-1"></div>
+  <div class="nebula nebula-2"></div>
+  <div class="nebula nebula-3"></div>
+
+  <div class="page">
+
+    <!-- ========== NAVBAR ========== -->
+    <nav class="nav">
+      <div class="nav-inner">
+        <a class="logo" href="#top">
+          <span class="logo-badge">
+            <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+          </span>
+          Orbital Arcade
+        </a>
+
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#game">Play</a></li>
+          <li><a href="#footer">Contact</a></li>
+        </ul>
+
+        <a href="#game" class="btn btn-primary">Launch Game</a>
+      </div>
+    </nav>
+
+    <!-- ========== HERO ========== -->
+    <header class="hero" id="top">
+      <span class="hero-eyebrow">✦ New: Star Drifter v2.0</span>
+      <h1>Blast off into a <span class="gradient">galaxy of play</span> — right in your browser.</h1>
+      <p>A lightning-fast, responsive landing page with a fully playable arcade game built in. No downloads, no sign-ups — just pure fun.</p>
+      <div class="hero-actions">
+        <a href="#game" class="btn btn-primary">▶ Play Star Drifter</a>
+        <a href="#features" class="btn btn-ghost">Explore Features</a>
+      </div>
+    </header>
+
+    <!-- ========== FEATURES ========== -->
+    <section class="section" id="features">
+      <div class="section-title">
+        <h2>Why you'll love it</h2>
+        <p>Everything you need for a beautiful, fast, and engaging experience.</p>
+      </div>
+
+      <div class="features">
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M13 2L4.5 13.5H11L9.5 22 19.5 10H13z"/></svg>
+          </div>
+          <h3>Instant Play</h3>
+          <p>The game runs entirely in your browser with zero plugins. Hit "Start" and you're flying in seconds.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm1-13h-2v6l5.25 3.15 1-1.65-4.25-2.55z"/></svg>
+          </div>
+          <h3>Responsive by Design</h3>
+          <p>From desktop to mobile, the layout and the game adapt beautifully to any screen size.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0112 6.5 5.5 5.5 0 0121.5 12c-2.5 4.4-9.5 9-9.5 9z"/></svg>
+          </div>
+          <h3>Built With Love</h3>
+          <p>Clean, semantic HTML with custom CSS — no frameworks, no bloat, just smooth, polished code.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ========== GAME SECTION ========== -->
+    <section class="game-section" id="game">
+      <div class="section-title">
+        <h2>Star Drifter</h2>
+        <p>Collect stars, dodge meteors, and set a new high score.</p>
+      </div>
+
+      <div class="game-shell">
+        <div class="game-header">
+          <div class="game-title">★ Star Drifter</div>
+          <div class="game-hud">
+            <div class="hud-item">SCORE <span id="scoreDisplay">0</span></div>
+            <div class="hud-item">LIVES <span id="livesDisplay">3</span></div>
+            <div class="hud-item">LEVEL <span id="levelDisplay">1</span></div>
+          </div>
+        </div>
+
+        <div class="game-canvas-wrap">
+          <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+          <!-- Overlay shown before start / on pause / game over -->
+          <div class="game-overlay" id="gameOverlay">
+            <h3 id="overlayTitle">Ready to fly?</h3>
+            <p id="overlayText">Use arrow keys or A / D to move. Collect golden stars, avoid red meteors.</p>
+            <button class="btn btn-primary" id="overlayBtn">Start Game</button>
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button class="btn btn-ghost" id="pauseBtn" disabled>⏸ Pause</button>
+          <button class="btn btn-ghost" id="restartBtn" disabled>↻ Restart</button>
+        </div>
+
+        <div class="mobile-controls">
+          <button class="mobile-btn" id="leftBtn">◀</button>
+          <button class="mobile-btn" id="rightBtn">▶</button>
+        </div>
+
+        <p class="game-tips">
+          <kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> to steer · <kbd>P</kbd> pause
+        </p>
+      </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="footer" id="footer">
+      <p>© 2026 Orbital Arcade. Crafted with <span style="color:var(--accent-hot)">♥</span> — all in one HTML file.</p>
+    </footer>
+
+  </div>
+
+  <script>
+    /* =========================================================
+       STAR DRIFTER — Game Logic
+       - Canvas-based arcade game, vanilla JS only.
+       - Ship at the bottom: steer left/right.
+       - Golden stars give points; red meteors cost a life.
+       - Difficulty rises as your score grows.
+       ========================================================= */
+
+    (function () {
+      // ---------- DOM references ----------
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+
+      const scoreDisplay = document.getElementById('scoreDisplay');
+      const livesDisplay = document.getElementById('livesDisplay');
+      const levelDisplay = document.getElementById('levelDisplay');
+
+      const overlay = document.getElementById('gameOverlay');
+      const overlayTitle = document.getElementById('overlayTitle');
+      const overlayText = document.getElementById('overlayText');
+      const overlayBtn = document.getElementById('overlayBtn');
+
+      const pauseBtn = document.getElementById('pauseBtn');
+      const restartBtn = document.getElementById('restartBtn');
+      const leftBtn = document.getElementById('leftBtn');
+      const rightBtn = document.getElementById('rightBtn');
+
+      // ---------- Game state ----------
+      const state = {
+        running: false,   // loop active
+        paused: false,    // paused mid-game
+        gameOver: false,
+        score: 0,
+        lives: 3,
+        level: 1,
+        stars: [],        // {x, y, r, speed}
+        meteors: [],      // {x, y, r, speed, angle}
+        particles: [],    // explosion sparkles
+        spawnTimer: 0,
+        meteorTimer: 0,
+        time: 0
+      };
+
+      // Ship object
+      const ship = {
+        x: canvas.width / 2,
+        y: canvas.height - 45,
+        width: 44,
+        height: 32,
+        speed: 320,   // px per second
+        tilt: 0
+      };
+
+      // Input tracking
+      const keys = { left: false, right: false };
+
+      // ---------- Space background (static stars) ----------
+      const bgStars = [];
+      for (let i = 0; i < 70; i++) {
+        bgStars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.4 + 0.3,
+          a: Math.random() * 0.5 + 0.2,
+          drift: Math.random() * 12 + 4
+        });
+      }
+
+      // ---------- Helpers ----------
+      function rand(min, max) { return Math.random() * (max - min) + min; }
+
+      function setHUD() {
+        scoreDisplay.textContent = state.score;
+        livesDisplay.textContent = state.lives;
+        levelDisplay.textContent = state.level;
+      }
+
+      // ---------- Spawning ----------
+      function spawnStar() {
+        state.stars.push({
+          x: rand(20, canvas.width - 20),
+          y: -20,
+          r: rand(7, 12),
+          speed: rand(60, 120) + state.level * 8
+        });
+      }
+
+      function spawnMeteor() {
+        const r = rand(10, 20);
+        state.meteors.push({
+          x: rand(20, canvas.width - 20),
+          y: -20,
+          r: r,
+          speed: rand(110, 180) + state.level * 10,
+          angle: rand(0, Math.PI * 2),
+          spin: rand(-3, 3)
+        });
+      }
+
+      // ---------- Collision (circle vs circle) ----------
+      function circlesHit(ax, ay, ar, bx, by, br) {
+        const dx = ax - bx, dy = ay - by;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        return dist < ar + br;
+      }
+
+      // ---------- Particle burst (explosion effect) ----------
+      function burst(x, y, color, count) {
+        for (let i = 0; i < count; i++) {
+          const angle = rand(0, Math.PI * 2);
+          const speed = rand(60, 260);
+          state.particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1,
+            decay: rand(1.5, 3),
+            color,
+            r: rand(2, 4)
+          });
+        }
+      }
+
+      // ---------- Update loop step ----------
+      function update(dt) {
+        if (!state.running || state.paused || state.gameOver) return;
+
+        state.time += dt;
+        const levelProgress = Math.floor(state.score / 150) + 1;
+        if (levelProgress !== state.level) {
+          state.level = levelProgress;
+          setHUD();
+        }
+
+        // ---- Move ship ----
+        const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+        ship.x += dir * ship.speed * dt;
+        // Tilt for visual feedback
+        ship.tilt += ((dir * 0.35) - ship.tilt) * Math.min(1, dt * 10);
+        // Keep ship in bounds
+        ship.x = Math.max(ship.width / 2 + 4, Math.min(canvas.width - ship.width / 2 - 4, ship.x));
+
+        // ---- Spawn objects (timers scale with level) ----
+        state.spawnTimer -= dt;
+        if (state.spawnTimer <= 0) {
+          spawnStar();
+          state.spawnTimer = rand(0.35, 0.7) - state.level * 0.02;
+        }
+        state.meteorTimer -= dt;
+        if (state.meteorTimer <= 0) {
+          spawnMeteor();
+          state.meteorTimer = rand(0.9, 1.6) - state.level * 0.04;
+        }
+
+        // ---- Move stars ----
+        for (let i = state.stars.length - 1; i >= 0; i--) {
+          const s = state.stars[i];
+          s.y += s.speed * dt;
+
+          // Off-screen: remove
+          if (s.y > canvas.height + 30) {
+            state.stars.splice(i, 1);
+            continue;
+          }
+
+          // Collect star
+          if (circlesHit(s.x, s.y, s.r + 6, ship.x, ship.y, 16)) {
+            state.score += 10;
+            burst(s.x, s.y, '#ffe9a8', 12);
+            state.stars.splice(i, 1);
+            setHUD();
+          }
+        }
+
+        // ---- Move meteors ----
+        for (let i = state.meteors.length - 1; i >= 0; i--) {
+          const m = state.meteors[i];
+          m.y += m.speed * dt;
+          m.angle += m.spin * dt;
+
+          // Off-screen: remove
+          if (m.y > canvas.height + 30) {
+            state.meteors.splice(i, 1);
+            continue;
+          }
+
+          // Hit ship
+          if (circlesHit(m.x, m.y, m.r, ship.x, ship.y, 14)) {
+            state.lives--;
+            burst(ship.x, ship.y, '#ff5ce1', 20);
+            state.meteors.splice(i, 1);
+
+            if (state.lives <= 0) {
+              state.lives = 0;
+              endGame();
+              return;
+            }
+            setHUD();
+          }
+        }
+
+        // ---- Particles ----
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+          const p = state.particles[i];
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vy += 60 * dt;            // slight gravity
+          p.life -= p.decay * dt;
+          if (p.life <= 0) state.particles.splice(i, 1);
+        }
+
+        // ---- Scroll background stars slowly ----
+        for (const b of bgStars) {
+          b.y += b.drift * dt;
+          if (b.y > canvas.height) {
+            b.y = -2;
+            b.x = Math.random() * canvas.width;
+          }
+        }
+      }
+
+      // ---------- Rendering ----------
+      function drawShip() {
+        // Save state for tilt
+        ctx.save();
+        ctx.translate(ship.x, ship.y);
+        ctx.rotate(ship.tilt);
+
+        // Engine flame (flickers)
+        const flicker = 0.6 + Math.random() * 0.4;
+        const grad = ctx.createLinearGradient(0, 18, 0, 34);
+        grad.addColorStop(0, '#00d4ff');
+        grad.addColorStop(1, 'rgba(0,212,255,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(-8, 16);
+        ctx.lineTo(0, 34 * flicker);
+        ctx.lineTo(8, 16);
+        ctx.closePath();
+        ctx.fill();
+
+        // Hull
+        const hull = ctx.createLinearGradient(0, -16, 0, 16);
+        hull.addColorStop(0, '#b8c7ff');
+        hull.addColorStop(1, '#7c5cff');
+        ctx.fillStyle = hull;
+        ctx.beginPath();
+        ctx.moveTo(0, -16);
+        ctx.lineTo(18, 14);
+        ctx.lineTo(10, 18);
+        ctx.lineTo(-10, 18);
+        ctx.lineTo(-18, 14);
+        ctx.closePath();
+        ctx.fill();
+
+        // Cockpit
+        ctx.fillStyle = '#00d4ff';
+        ctx.beginPath();
+        ctx.arc(0, -2, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawStars() {
+        // Background stars
+        for (const b of bgStars) {
+          ctx.globalAlpha = b.a;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // Collectible golden stars
+        for (const s of state.stars) {
+          // Glow
+          ctx.globalAlpha = 0.3;
+          ctx.fillStyle = '#ffe9a8';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r * 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+
+          // Star shape (4-point sparkle)
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(state.time * 1.2);
+          ctx.fillStyle = '#ffe9a8';
+          ctx.beginPath();
+          ctx.moveTo(0, -s.r);
+          ctx.quadraticCurveTo(s.r * 0.25, -s.r * 0.25, s.r, 0);
+          ctx.quadraticCurveTo(s.r * 0.25, s.r * 0.25, 0, s.r);
+          ctx.quadraticCurveTo(-s.r * 0.25, s.r * 0.25, -s.r, 0);
+          ctx.quadraticCurveTo(-s.r * 0.25, -s.r * 0.25, 0, -s.r);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function drawMeteors() {
+        for (const m of state.meteors) {
+          ctx.save();
+          ctx.translate(m.x, m.y);
+          ctx.rotate(m.angle);
+
+          const g = ctx.createRadialGradient(-3, -3, 2, 0, 0, m.r);
+          g.addColorStop(0, '#ff8a5c');
+          g.addColorStop(0.6, '#e83a3a');
+          g.addColorStop(1, '#7a0e0e');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(0, 0, m.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Craters
+          ctx.fillStyle = 'rgba(0,0,0,0.25)';
+          ctx.beginPath();
+          ctx.arc(-m.r * 0.3, -m.r * 0.2, m.r * 0.22, 0, Math.PI * 2);
+          ctx.arc(m.r * 0.25, m.r * 0.3, m.r * 0.16, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
+      function drawParticles() {
+        for (const p of state.particles) {
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawBackground() {
+        // Deep space gradient
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, '#0b0b24');
+        g.addColorStop(1, '#07071a');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function draw() {
+        drawBackground();
+        drawStars();
+        drawMeteors();
+        drawShip();
+        drawParticles();
+      }
+
+      // ---------- Main loop ----------
+      let lastTime = 0;
+      function loop(t) {
+        const dt = Math.min((t - lastTime) / 1000, 0.05);
+        lastTime = t;
+
+        update(dt);
+        draw();
+
+        requestAnimationFrame(loop);
+      }
+
+      // ---------- Game flow control ----------
+      function resetGame() {
+        state.score = 0;
+        state.lives = 3;
+        state.level = 1;
+        state.stars = [];
+        state.meteors = [];
+        state.particles = [];
+        state.spawnTimer = 0.5;
+        state.meteorTimer = 1.2;
+        state.time = 0;
+        state.gameOver = false;
+        state.paused = false;
+        ship.x = canvas.width / 2;
+        ship.tilt = 0;
+        setHUD();
+      }
+
+      function startGame() {
+        resetGame();
+        state.running = true;
+        overlay.classList.add('hidden');
+        pauseBtn.disabled = false;
+        restartBtn.disabled = false;
+        pauseBtn.textContent = '⏸ Pause';
+      }
+
+      function togglePause() {
+        if (!state.running || state.gameOver) return;
+        state.paused = !state.paused;
+        pauseBtn.textContent = state.paused ? '▶ Resume' : '⏸ Pause';
+
+        if (state.paused) {
+          overlayTitle.textContent = 'Paused';
+          overlayText.textContent = 'Take a breath — the galaxy will wait.';
+          overlayBtn.textContent = 'Resume';
+          overlay.classList.remove('hidden');
+        } else {
+          overlay.classList.add('hidden');
+        }
+      }
+
+      function endGame() {
+        state.gameOver = true;
+        state.running = false;
+        overlayTitle.textContent = 'Game Over';
+        overlayText.textContent = 'Final score: ' + state.score + ' — Level ' + state.level + '. Try again?';
+        overlayBtn.textContent = 'Play Again';
+        overlay.classList.remove('hidden');
+        pauseBtn.disabled = true;
+        restartBtn.disabled = false;
+      }
+
+      // ---------- Overlay button ----------
+      overlayBtn.addEventListener('click', function () {
+        if (state.gameOver) {
+          startGame();           // fresh run
+        } else if (state.paused) {
+          togglePause();         // resume
+        } else {
+          startGame();           // first start
+        }
+      });
+
+      // ---------- Control buttons ----------
+      pauseBtn.addEventListener('click', togglePause);
+
+      restartBtn.addEventListener('click', function () {
+        startGame();
+      });
+
+      // ---------- Keyboard controls ----------
+      window.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+        if (e.key === 'p' || e.key === 'P') togglePause();
+        // Prevent page scroll on arrows
+        if (['ArrowLeft', 'ArrowRight'].includes(e.key)) e.preventDefault();
+      });
+
+      window.addEventListener('keyup', function (e) {
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+        if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+      });
+
+      // ---------- Mobile buttons ----------
+      function bindHold(btn, keyName) {
+        btn.addEventListener('pointerdown', function (e) { e.preventDefault(); keys[keyName] = true; });
+        btn.addEventListener('pointerup', function () { keys[keyName] = false; });
+        btn.addEventListener('pointerleave', function () { keys[keyName] = false; });
+        btn.addEventListener('pointercancel', function () { keys[keyName] = false; });
+      }
+      bindHold(leftBtn, 'left');
+      bindHold(rightBtn, 'right');
+
+      // ---------- Kick off ----------
+      setHUD();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+
+</body>
+</html>
+```
+
+**What's included:**
+
+- **Landing page** — sticky glass navbar, animated starfield + nebula background, hero section with gradient headline and CTAs, three feature cards, and a footer. Fully responsive (desktop → mobile).
+- **The game — "Star Drifter"** — a playable arcade game rendered on `<canvas>`, all vanilla JS:
+  - Steer your ship with **←/→** or **A/D**, plus on-screen buttons on mobile.
+  - Collect golden stars (+10 pts), dodge red meteors (lose a life).
+  - Levels increase difficulty as your score climbs; HUD shows score, lives, and level.
+  - Pause with **P** or the Pause button, restart anytime via Restart.
+  - Particle explosions, engine flicker, star twinkle, and a tilt effect when steering.
+  - No `alert()` — all messages show on the in-page overlay.
+- **No backend, no external files** — it's one self-contained HTML file. The only external resources are Google Fonts, which have built-in fallbacks.
+
+Save it as `index.html` and open it in any modern browser to play.
